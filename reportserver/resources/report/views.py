@@ -1,0 +1,41 @@
+from typing import List
+from fastapi import Request, Response
+from fastapi.responses import FileResponse
+from starlette.status import HTTP_201_CREATED
+
+from .models import GeneratedReport, GeneratedReportSource
+
+
+async def make_report(request: Request):
+    """Create a task to generate a report from the given prompt and images."""
+    # TODO: Complete OpenAI and Celery stuff
+    # TODO: How to return live progress (%)?
+    return Response(status_code=HTTP_201_CREATED)
+
+
+async def get_report_list(request: Request) -> List[GeneratedReport]:
+    """Get list of all created reports."""
+    return [GeneratedReport(id=1, prompt="")]
+
+
+async def get_report(request: Request, report_id: int) -> GeneratedReportSource:
+    """Get report with given id."""
+    return GeneratedReportSource(
+        id=report_id,
+        prompt="",
+        content=await request.app.extra["report_maker"].from_template_async(
+            "deafult_mclarens_report_template.j2.html"
+        ),
+    )
+
+
+async def get_report_pdf(request: Request, report_id: int) -> FileResponse:
+    """Get report PDF with given id."""
+    # TODO: Fetch pre-generated file based on ID instead of re-generating it every time
+    return FileResponse(
+        request.app.extra["report_exporter"].make_pdf(
+            await request.app.extra["report_maker"].from_template_async(
+                "deafult_mclarens_report_template.j2.html"
+            )
+        )
+    )

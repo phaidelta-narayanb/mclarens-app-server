@@ -1,0 +1,34 @@
+[tool.poetry]
+name = "mclarens-server"
+version = "0.1.0"
+description = ""
+authors = ["Narayan Bandodker <narayan.b@phaidelta.com>"]
+readme = "README.md"
+packages = [{include = "reportserver"}]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+fastapi = "^0.105.0"
+pydantic = "^2.5.2"
+pydantic-settings = "^2.1.0"
+python-dotenv = "^1.0.0"
+pillow = "^10.1.0"
+jinja2 = "^3.1.2"
+
+[tool.poetry.group.dev.dependencies]
+uvicorn = "^0.24.0.post1"
+
+
+[tool.poetry.group.weasyprint.dependencies]
+weasyprint = "^60.2"
+
+
+[tool.poetry.group.pandoc.dependencies]
+pypandoc = "^1.12"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[project.scripts]
+mclarens-server = "reportserver:serve"
