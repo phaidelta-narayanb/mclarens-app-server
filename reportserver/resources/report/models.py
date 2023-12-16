@@ -1,11 +1,19 @@
 from typing import List, Optional
+from fastapi import Form
 from pydantic import BaseModel, AnyUrl
 
 
 class CreateReportTask(BaseModel):
-    model_name: str
-    prompt: Optional[str]
-    images: List[AnyUrl]
+    inference_model_name: str
+    incident_claim_type: str
+
+    @classmethod
+    async def as_form(
+        cls,
+        inference_model_name: str = Form(...),
+        incident_claim_type: str = Form(...)
+    ):
+        return cls(inference_model_name=inference_model_name, incident_claim_type=incident_claim_type)
 
 
 class GeneratedReport(BaseModel):
