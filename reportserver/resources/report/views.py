@@ -1,16 +1,20 @@
 from typing import List
+from uuid import uuid4
 from fastapi import Request, Response
 from fastapi.responses import FileResponse
-from starlette.status import HTTP_201_CREATED
 
-from .models import GeneratedReport, GeneratedReportSource
+from reportserver.models import CreatedWorkTask
+
+from .models import CreateReportTask, GeneratedReport, GeneratedReportSource
 
 
-async def make_report(request: Request):
+async def make_report(request: Request, params: CreateReportTask) -> CreatedWorkTask:
     """Create a task to generate a report from the given prompt and images."""
     # TODO: Complete OpenAI and Celery stuff
     # TODO: How to return live progress (%)?
-    return Response(status_code=HTTP_201_CREATED)
+    return CreatedWorkTask(
+        task_id=uuid4().hex
+    )
 
 
 async def get_report_list(request: Request) -> List[GeneratedReport]:
