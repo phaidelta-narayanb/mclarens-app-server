@@ -25,7 +25,7 @@ async def make_report(
     print("Images:", images)
 
     print()
-    print("Waiting for some time to simulate work...")
+    print("Waiting for some time to simulate celery inserting...")
     await asyncio.sleep(2.0)
 
     # TODO: Complete OpenAI and Celery stuff
