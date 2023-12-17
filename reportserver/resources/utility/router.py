@@ -5,7 +5,7 @@ from . import views
 
 
 def init_app(app: FastAPI):
-    routes = APIRouter(prefix="/utility")
+    routes = APIRouter(prefix="/utility", tags=["utility"])
 
     routes.add_api_route("/html2pdf", views.make_pdf, methods={"POST"})
 
