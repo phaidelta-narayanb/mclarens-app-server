@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from uuid import uuid4
+from uuid import UUID
 from pydantic import BaseModel
 
 
@@ -9,6 +9,6 @@ class Task(BaseModel):
     progress: float
     queue_position: int
     estimated_queue_time: timedelta
-    created_by_user: uuid4
+    created_by_user: UUID
     created_ts: datetime
     updated_ts: datetime
