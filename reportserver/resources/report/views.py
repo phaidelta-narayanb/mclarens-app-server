@@ -35,7 +35,7 @@ async def make_report(
 
 async def get_report_list(request: Request) -> List[GeneratedReport]:
     """Get list of all created reports."""
-    return [GeneratedReport(id=1, prompt="")]
+    return [GeneratedReport(id=1, prompt="House fire")]
 
 
 async def get_report(request: Request, report_id: int) -> GeneratedReportSource:
@@ -55,6 +55,9 @@ async def get_report(request: Request, report_id: int) -> GeneratedReportSource:
 
 async def get_report_pdf(request: Request, report_id: int) -> FileResponse:
     """Get report PDF with given id."""
+    if report_id != 1:
+        raise HTTPException(HTTP_404_NOT_FOUND, detail=f"Requested report with ID '{report_id}' not found.")
+
     # TODO: Fetch pre-generated file based on ID instead of re-generating it every time
     return FileResponse(
         request.app.extra["report_exporter"].make_pdf(
