@@ -8,5 +8,6 @@ class Settings(BaseSettings):
 
     model_config = SettingsConfigDict(
         secrets_dir="secrets/",
-        env_prefix="REPORT_SERVER",
+        env_prefix="REPORT_SERVER_",
+        env_file=".env",
     )
