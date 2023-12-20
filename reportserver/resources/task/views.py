@@ -16,6 +16,7 @@ from .models import Task
 async def get_task_status(task_id: str) -> Task:
     return Task(
         id=task_id,
+        name="DIY task",
         status="PENDING",
         progress=None,
         queue_position=999,
@@ -30,6 +31,7 @@ async def get_all_tasks_status() -> List[Task]:
     return [
         Task(
             id="699e7dd6d6524bc7a8b9610f8cfb40a8",
+            name="House task 1",
             status="PENDING",
             progress=None,
             queue_position=999,
@@ -40,6 +42,7 @@ async def get_all_tasks_status() -> List[Task]:
         ),
         Task(
             id="699e7dd6d6524bc7a8b9610f8cfb40a8",
+            name="House task 2",
             status="STARTED",
             progress=0.2,
             queue_position=0,
@@ -56,6 +59,7 @@ async def dummy_task_status_generator(request: Request, task_id):
     while True:
         yield Task(
             id=task_id,
+            name="DIY task",
             status="PENDING",
             progress=None,
             queue_position=999,
@@ -73,6 +77,7 @@ async def dummy_tasks_status_generator(request: Request):
         yield [
             Task(
                 id="699e7dd6d6524bc7a8b9610f8cfb40a8",
+                name="House task 1",
                 status="PENDING",
                 progress=None,
                 queue_position=999,
@@ -83,6 +88,7 @@ async def dummy_tasks_status_generator(request: Request):
             ),
             Task(
                 id="699e7dd6d6524bc7a8b9610f8cfb40a8",
+                name="House task 2",
                 status="STARTED",
                 progress=0.2,
                 queue_position=0,

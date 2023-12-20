@@ -6,6 +6,7 @@ from pydantic import BaseModel
 
 class Task(BaseModel):
     id: str
+    name: str
     status: str
     progress: Optional[float] = None
     queue_position: Optional[int] = None
