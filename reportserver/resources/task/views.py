@@ -17,7 +17,7 @@ async def get_task_status(task_id: str) -> Task:
     return Task(
         id=task_id,
         status="PENDING",
-        progress=0.0,
+        progress=None,
         queue_position=999,
         estimated_queue_time=timedelta(days=2, minutes=30),
         created_by_user=uuid4(),
@@ -31,13 +31,23 @@ async def get_all_tasks_status() -> List[Task]:
         Task(
             id="699e7dd6d6524bc7a8b9610f8cfb40a8",
             status="PENDING",
-            progress=0.0,
+            progress=None,
             queue_position=999,
             estimated_queue_time=timedelta(days=2, minutes=30),
             created_by_user=uuid4(),
             created_ts=datetime.now(),
             updated_ts=datetime.now(),
-        )
+        ),
+        Task(
+            id="699e7dd6d6524bc7a8b9610f8cfb40a8",
+            status="STARTED",
+            progress=0.2,
+            queue_position=0,
+            estimated_queue_time=None,
+            created_by_user=uuid4(),
+            created_ts=datetime.now(),
+            updated_ts=datetime.now(),
+        ),
     ]
 
 
@@ -47,7 +57,7 @@ async def dummy_task_status_generator(request: Request, task_id):
         yield Task(
             id=task_id,
             status="PENDING",
-            progress=0.0,
+            progress=None,
             queue_position=999,
             estimated_queue_time=timedelta(days=2, minutes=30),
             created_by_user=uuid4(),
@@ -64,13 +74,23 @@ async def dummy_tasks_status_generator(request: Request):
             Task(
                 id="699e7dd6d6524bc7a8b9610f8cfb40a8",
                 status="PENDING",
-                progress=0.0,
+                progress=None,
                 queue_position=999,
                 estimated_queue_time=timedelta(days=2, minutes=30),
                 created_by_user=uuid4(),
                 created_ts=c_time,
                 updated_ts=datetime.utcnow(),
-            )
+            ),
+            Task(
+                id="699e7dd6d6524bc7a8b9610f8cfb40a8",
+                status="STARTED",
+                progress=0.2,
+                queue_position=0,
+                estimated_queue_time=None,
+                created_by_user=uuid4(),
+                created_ts=datetime.now(),
+                updated_ts=datetime.now(),
+            ),
         ]
         await asyncio.sleep(random.uniform(0.1, 5.0))
 
