@@ -1,10 +1,17 @@
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
 [tool.poetry]
 name = "mclarens-server"
 version = "0.1.6"
 description = ""
 authors = ["Narayan Bandodker <narayan.b@phaidelta.com>"]
 readme = "README.md"
-packages = [{include = "reportserver"}]
+packages = [
+    {include = "reportserver"},
+    {include = "reporttask"}
+]
 
 [tool.poetry.dependencies]
 python = "^3.9"
@@ -28,10 +35,6 @@ weasyprint = "^60.2"
 
 [tool.poetry.group.pandoc.dependencies]
 pypandoc = "^1.12"
-
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
 
 [project.scripts]
 mclarens-server = "reportserver:serve"
