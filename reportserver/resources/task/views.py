@@ -57,5 +57,27 @@ async def dummy_task_status_generator(request: Request, task_id):
         await asyncio.sleep(random.uniform(0.1, 5.0))
 
 
+async def dummy_tasks_status_generator(request: Request):
+    c_time = datetime.utcnow()
+    while True:
+        yield [
+            Task(
+                id="699e7dd6d6524bc7a8b9610f8cfb40a8",
+                status="PENDING",
+                progress=0.0,
+                queue_position=999,
+                estimated_queue_time=timedelta(days=2, minutes=30),
+                created_by_user=uuid4(),
+                created_ts=c_time,
+                updated_ts=datetime.utcnow(),
+            )
+        ]
+        await asyncio.sleep(random.uniform(0.1, 5.0))
+
+
 async def live_task_status(request: Request, task_id: str) -> EventSourceResponse:
     return EventSourceResponse(dummy_task_status_generator(request, task_id))
+
+
+async def live_all_task_status(request: Request) -> EventSourceResponse:
+    return EventSourceResponse(dummy_tasks_status_generator(request))

@@ -18,7 +18,9 @@ class CreateReportTask(BaseModel):
 
 class GeneratedReport(BaseModel):
     id: int
-    prompt: Optional[str]
+    case_name: str
+    case_ref: Optional[str] = None
+    prompt: Optional[str] = None
 
 
 class GeneratedReportSource(GeneratedReport):

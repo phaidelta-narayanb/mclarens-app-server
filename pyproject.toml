@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "mclarens-server"
-version = "0.1.5"
+version = "0.1.6"
 description = ""
 authors = ["Narayan Bandodker <narayan.b@phaidelta.com>"]
 readme = "README.md"

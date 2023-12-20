@@ -35,7 +35,7 @@ async def make_report(
 
 async def get_report_list(request: Request) -> List[GeneratedReport]:
     """Get list of all created reports."""
-    return [GeneratedReport(id=1, prompt="House fire")]
+    return [GeneratedReport(id=1, case_name="Canada House Fire", prompt="House fire")]
 
 
 async def get_report(request: Request, report_id: int) -> GeneratedReportSource:
@@ -46,6 +46,7 @@ async def get_report(request: Request, report_id: int) -> GeneratedReportSource:
     # FIXME: Dummy response
     return GeneratedReportSource(
         id=report_id,
+        case_name="Canada House Fire",
         prompt="House fire",
         content=await request.app.extra["report_maker"].from_template_async(
             "deafult_mclarens_report_template.j2.html"
