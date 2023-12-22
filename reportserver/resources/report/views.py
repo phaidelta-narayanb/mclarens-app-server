@@ -1,6 +1,6 @@
 import asyncio
 from typing import List
-from fastapi import Depends, File, HTTPException, Request, Response, UploadFile
+from fastapi import Depends, File, HTTPException, Request, UploadFile
 from fastapi.responses import FileResponse
 
 from starlette.status import HTTP_404_NOT_FOUND
@@ -71,10 +71,15 @@ async def get_report(
     )
 
 
-async def get_report_pdf(request: Request, report_id: int,
-    report_service: ReportService = Depends(ReportService)) -> FileResponse:
+async def get_report_pdf(
+    request: Request,
+    report_id: int,
+    report_service: ReportService = Depends(ReportService),
+) -> FileResponse:
     """Get report PDF with given id."""
-    pdf_response = await report_service.get_generated_report_pdf(report_id, request.app.extra["report_exporter"])
+    pdf_response = await report_service.get_generated_report_pdf(
+        report_id, request.app.extra["report_exporter"]
+    )
 
     if pdf_response is None:
         raise HTTPException(

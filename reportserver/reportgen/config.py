@@ -1,7 +1,6 @@
 from pydantic import BaseModel
 
 from typing import List, Dict, Literal, Union, Optional
-from pathlib import Path
 
 
 class UploadSettings(BaseModel):

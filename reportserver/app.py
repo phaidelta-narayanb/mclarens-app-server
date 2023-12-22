@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from .resources import router as app_router
 from .reportgen.report_export import ReportExporter
 from .reportgen.report_maker import ReportMaker
-from .config import Settings
+from .config import Settings  # noqa
 
 
 API_VERSION = "0.1.10"

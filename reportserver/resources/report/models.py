@@ -1,8 +1,8 @@
 from datetime import datetime
-from typing import List, Optional
+from typing import Optional
 from uuid import UUID
 from fastapi import Form
-from pydantic import BaseModel, AnyUrl, ConfigDict
+from pydantic import BaseModel, ConfigDict
 
 
 class CreateReportTask(BaseModel):
@@ -26,7 +26,7 @@ class GeneratedReport(BaseModel):
     prompt: Optional[str] = None
 
     created_ts: datetime
-    created_by : UUID
+    created_by: UUID
     updated_ts: Optional[datetime] = None
 
     model_config = ConfigDict(from_attributes=True)

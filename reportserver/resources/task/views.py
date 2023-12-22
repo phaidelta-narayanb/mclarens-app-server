@@ -11,7 +11,8 @@ from .services import TaskService
 
 from .models import WorkTask, TaskState, WorkTaskIDType
 
-# TODO: CLI Arguments to enable different modes (eg: flag to show no tasks, flag to show 10 tasks, flag to show only done tasks, etc.)
+# TODO: CLI Arguments to enable different modes (eg: flag to show no tasks, flag to
+# show 10 tasks, flag to show only done tasks, etc.)
 # TODO: Same for other resources
 
 
