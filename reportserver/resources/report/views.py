@@ -1,12 +1,12 @@
 import asyncio
 from typing import List
-from uuid import uuid4
 from fastapi import Depends, File, HTTPException, Request, Response, UploadFile
 from fastapi.responses import FileResponse
 
 from starlette.status import HTTP_404_NOT_FOUND
+from reportserver.resources.report.services import ReportService
 
-from reportserver.models import CreatedWorkTask
+from reportserver.resources.task.models import WorkTask
 
 from .models import CreateReportTask, GeneratedReport, GeneratedReportSource
 
@@ -15,7 +15,8 @@ async def make_report(
     request: Request,
     inference_params: CreateReportTask = Depends(CreateReportTask.as_form),
     images: List[UploadFile] = File(None),
-) -> CreatedWorkTask:
+    report_service: ReportService = Depends(ReportService),
+) -> WorkTask:
     """Create a task to generate a report from the given prompt and images."""
 
     print("=== Extracted information ===")
@@ -30,18 +31,34 @@ async def make_report(
 
     # TODO: Complete OpenAI and Celery stuff
     # TODO: How to return live progress (%)? Decide between SSE, REST and WS
-    return CreatedWorkTask(task_id=uuid4().hex)
+    return await report_service.create_report_generate_task(
+        inference_params.inference_model_name,
+        inference_params.incident_claim_type,
+        images,
+    )
 
 
-async def get_report_list(request: Request) -> List[GeneratedReport]:
+async def get_report_list(
+    request: Request, report_service: ReportService = Depends(ReportService)
+) -> List[GeneratedReport]:
     """Get list of all created reports."""
-    return [GeneratedReport(id=1, case_name="Canada House Fire", prompt="House fire")]
+    return await report_service.get_generated_reports()
 
 
-async def get_report(request: Request, report_id: int) -> GeneratedReportSource:
+async def get_report(
+    request: Request,
+    report_id: int,
+    report_service: ReportService = Depends(ReportService),
+) -> GeneratedReportSource:
     """Get report with given id."""
-    if report_id != 1:
-        raise HTTPException(HTTP_404_NOT_FOUND, detail=f"Requested report with ID '{report_id}' not found.")
+    report = await report_service.get_generated_report_with_source_from_id(report_id)
+    if report is None:
+        raise HTTPException(
+            HTTP_404_NOT_FOUND,
+            detail=f"Requested report with ID '{report_id}' not found.",
+        )
+
+    return report
 
     # FIXME: Dummy response
     return GeneratedReportSource(
@@ -54,16 +71,15 @@ async def get_report(request: Request, report_id: int) -> GeneratedReportSource:
     )
 
 
-async def get_report_pdf(request: Request, report_id: int) -> FileResponse:
+async def get_report_pdf(request: Request, report_id: int,
+    report_service: ReportService = Depends(ReportService)) -> FileResponse:
     """Get report PDF with given id."""
-    if report_id != 1:
-        raise HTTPException(HTTP_404_NOT_FOUND, detail=f"Requested report with ID '{report_id}' not found.")
+    pdf_response = await report_service.get_generated_report_pdf(report_id, request.app.extra["report_exporter"])
 
-    # TODO: Fetch pre-generated file based on ID instead of re-generating it every time
-    return FileResponse(
-        request.app.extra["report_exporter"].make_pdf(
-            await request.app.extra["report_maker"].from_template_async(
-                "deafult_mclarens_report_template.j2.html"
-            )
+    if pdf_response is None:
+        raise HTTPException(
+            HTTP_404_NOT_FOUND,
+            detail=f"Requested report with ID '{report_id}' not found.",
         )
-    )
+
+    return FileResponse(pdf_response)

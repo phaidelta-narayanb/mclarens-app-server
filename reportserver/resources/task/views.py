@@ -1,109 +1,68 @@
 import asyncio
-from datetime import datetime, timedelta
+from datetime import datetime
 import random
 from typing import List
-from uuid import uuid4
-from fastapi import Request
+from fastapi import HTTPException, Request, Depends
+from starlette.status import HTTP_404_NOT_FOUND
 
 from sse_starlette.sse import EventSourceResponse
 
-from .models import Task
+from .services import TaskService
+
+from .models import WorkTask, TaskState, WorkTaskIDType
 
 # TODO: CLI Arguments to enable different modes (eg: flag to show no tasks, flag to show 10 tasks, flag to show only done tasks, etc.)
 # TODO: Same for other resources
 
 
-async def get_task_status(task_id: str) -> Task:
-    return Task(
-        id=task_id,
-        name="DIY task",
-        status="PENDING",
-        progress=None,
-        queue_position=999,
-        estimated_queue_time=timedelta(days=2, minutes=30),
-        created_by_user=uuid4(),
-        created_ts=datetime.utcnow(),
-        updated_ts=datetime.utcnow(),
+async def get_task_status(
+    task_id: WorkTaskIDType, task_service: TaskService = Depends(TaskService)
+) -> WorkTask:
+    task = await task_service.get_task_from_id(task_id)
+    if task is None:
+        raise HTTPException(
+            HTTP_404_NOT_FOUND,
+            detail=f"Requested task with ID '{task_id}' not found.",
+        )
+    return task
+
+
+async def get_all_tasks_status(
+    task_service: TaskService = Depends(TaskService),
+) -> List[WorkTask]:
+    return await task_service.get_all_tasks()
+
+
+async def dummy_task_status_generator(
+    request: Request, task_id: WorkTaskIDType, task_service: TaskService
+):
+    while True:
+        yield await task_service.get_task_from_id(task_id)
+        await asyncio.sleep(random.uniform(0.1, 5.0))
+
+
+async def dummy_tasks_status_generator(request: Request, task_service: TaskService):
+    while True:
+        tasks = await task_service.get_all_tasks()
+        for t in tasks:
+            t.updated_ts = datetime.utcnow()
+            if t.status == TaskState.STARTED:
+                if t.progress is None:
+                    t.progress = 0.0
+                t.progress -= (t.progress - 1.0) * 0.9
+        yield tasks
+        await asyncio.sleep(random.uniform(0.1, 5.0))
+
+
+async def live_task_status(
+    request: Request, task_id: str, task_service: TaskService = Depends(TaskService)
+) -> EventSourceResponse:
+    return EventSourceResponse(
+        dummy_task_status_generator(request, task_id, task_service)
     )
 
 
-async def get_all_tasks_status() -> List[Task]:
-    return [
-        Task(
-            id="699e7dd6d6524bc7a8b9610f8cfb40a8",
-            name="House task 1",
-            status="PENDING",
-            progress=None,
-            queue_position=999,
-            estimated_queue_time=timedelta(days=2, minutes=30),
-            created_by_user=uuid4(),
-            created_ts=datetime.now(),
-            updated_ts=datetime.now(),
-        ),
-        Task(
-            id="699e7dd6d6524bc7a8b9610f8cfb40a8",
-            name="House task 2",
-            status="STARTED",
-            progress=0.2,
-            queue_position=0,
-            estimated_queue_time=None,
-            created_by_user=uuid4(),
-            created_ts=datetime.now(),
-            updated_ts=datetime.now(),
-        ),
-    ]
-
-
-async def dummy_task_status_generator(request: Request, task_id):
-    c_time = datetime.utcnow()
-    while True:
-        yield Task(
-            id=task_id,
-            name="DIY task",
-            status="PENDING",
-            progress=None,
-            queue_position=999,
-            estimated_queue_time=timedelta(days=2, minutes=30),
-            created_by_user=uuid4(),
-            created_ts=c_time,
-            updated_ts=datetime.utcnow(),
-        )
-        await asyncio.sleep(random.uniform(0.1, 5.0))
-
-
-async def dummy_tasks_status_generator(request: Request):
-    c_time = datetime.utcnow()
-    while True:
-        yield [
-            Task(
-                id="699e7dd6d6524bc7a8b9610f8cfb40a8",
-                name="House task 1",
-                status="PENDING",
-                progress=None,
-                queue_position=999,
-                estimated_queue_time=timedelta(days=2, minutes=30),
-                created_by_user=uuid4(),
-                created_ts=c_time,
-                updated_ts=datetime.utcnow(),
-            ),
-            Task(
-                id="699e7dd6d6524bc7a8b9610f8cfb40a8",
-                name="House task 2",
-                status="STARTED",
-                progress=0.2,
-                queue_position=0,
-                estimated_queue_time=None,
-                created_by_user=uuid4(),
-                created_ts=datetime.now(),
-                updated_ts=datetime.now(),
-            ),
-        ]
-        await asyncio.sleep(random.uniform(0.1, 5.0))
-
-
-async def live_task_status(request: Request, task_id: str) -> EventSourceResponse:
-    return EventSourceResponse(dummy_task_status_generator(request, task_id))
-
-
-async def live_all_task_status(request: Request) -> EventSourceResponse:
-    return EventSourceResponse(dummy_tasks_status_generator(request))
+async def live_all_task_status(
+    request: Request, task_service: TaskService = Depends(TaskService)
+) -> EventSourceResponse:
+    return EventSourceResponse(dummy_tasks_status_generator(request, task_service))

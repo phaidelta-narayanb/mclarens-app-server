@@ -10,7 +10,7 @@ from .reportgen.report_maker import ReportMaker
 from .config import Settings
 
 
-API_VERSION = "0.1.9"
+API_VERSION = "0.1.10"
 """Protocol version"""
 
 # FIXME: Change to proper domains and load from config file, remove this once done
