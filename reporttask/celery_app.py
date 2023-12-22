@@ -1,13 +1,7 @@
-import os
-
 from celery import Celery
 from .config import CelerySettings
 
-
 settings = CelerySettings()
-
-print(settings.backend_dsn)
-print(settings.broker_dsn)
 
 app = Celery(
     __name__,
