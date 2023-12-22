@@ -27,6 +27,8 @@ sse-starlette = "^1.8.2"
 
 [tool.poetry.group.dev.dependencies]
 uvicorn = "^0.24.0.post1"
+isort = "^5.13.2"
+black = "^23.12.0"
 
 
 [tool.poetry.group.weasyprint.dependencies]
