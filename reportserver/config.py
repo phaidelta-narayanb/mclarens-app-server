@@ -1,6 +1,6 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from .reportgen.config import GenerationSettings
+from reportgen.config import GenerationSettings
 
 
 class Settings(BaseSettings):

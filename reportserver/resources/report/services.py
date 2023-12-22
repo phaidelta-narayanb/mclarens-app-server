@@ -1,9 +1,12 @@
 from datetime import datetime
 from uuid import uuid4
-from reportserver.reportgen.report_export import ReportExporter
+
+from reportgen.report_export import ReportExporter
+
 from reportserver.resources.task.models import TaskState, WorkTask
+from reportserver.db import memdb
+
 from .models import GeneratedReport, GeneratedReportSource
-from ...db.db import memdb
 
 memdb["reports"] = []
 
@@ -15,6 +18,8 @@ if len(memdb["reports"]) == 0:
                 case_name="Canada House Fire",
                 prompt="House fire",
                 content=open("templates/final_report_test.html").read(),
+                created_ts=datetime.utcnow(),
+                created_by=uuid4(),
             )
         ]
     )

@@ -44,6 +44,9 @@ async def dummy_task_status_generator(
 
 async def dummy_tasks_status_generator(request: Request, task_service: TaskService):
     while True:
+        if await request.is_disconnected():
+            break
+
         tasks = await task_service.get_all_tasks()
         for t in tasks:
             t.updated_ts = datetime.utcnow()

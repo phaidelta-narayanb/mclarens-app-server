@@ -1,2 +1,5 @@
 memdb = {}
-'''Temporary in-memory db to store tasks'''
+"""Temporary in-memory db to store tasks"""
+
+
+__all__ = ["memdb"]

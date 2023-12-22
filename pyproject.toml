@@ -4,13 +4,14 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "mclarens-server"
-version = "0.1.10"
+version = "0.1.11"
 description = ""
 authors = ["Narayan Bandodker <narayan.b@phaidelta.com>"]
 readme = "README.md"
 packages = [
     {include = "reportserver"},
-    {include = "reporttask"}
+    {include = "reporttask"},
+    {include = "reportgen"}
 ]
 
 [tool.poetry.dependencies]
