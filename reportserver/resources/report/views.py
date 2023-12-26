@@ -1,5 +1,7 @@
 import asyncio
+import tempfile
 from typing import List
+import zipfile
 from fastapi import Depends, File, HTTPException, Request, UploadFile
 from fastapi.responses import FileResponse
 
@@ -9,6 +11,10 @@ from reportserver.resources.report.services import ReportService
 from reportserver.resources.task.models import WorkTask
 
 from .models import CreateReportTask, GeneratedReport, GeneratedReportSource
+
+
+async def get_possible_export_formats() -> List[str]:
+    return [".pdf"]
 
 
 async def make_report(
@@ -60,16 +66,6 @@ async def get_report(
 
     return report
 
-    # FIXME: Dummy response
-    return GeneratedReportSource(
-        id=report_id,
-        case_name="Canada House Fire",
-        prompt="House fire",
-        content=await request.app.extra["report_maker"].from_template_async(
-            "deafult_mclarens_report_template.j2.html"
-        ),
-    )
-
 
 async def get_report_pdf(
     request: Request,
@@ -88,3 +84,10 @@ async def get_report_pdf(
         )
 
     return FileResponse(pdf_response)
+
+
+async def get_reports_as_zip_export(format: str = ".pdf") -> FileResponse:
+    zip_export_file = tempfile.mktemp(".zip")
+    with zipfile.ZipFile(zip_export_file, mode="w") as zf:
+        zf.comment = "Test".encode()
+    return FileResponse(zip_export_file)

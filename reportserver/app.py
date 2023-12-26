@@ -11,7 +11,7 @@ from .resources import router as app_router
 from .config import Settings  # noqa
 
 
-API_VERSION = "0.1.11"
+API_VERSION = "0.1.12"
 """Protocol version"""
 
 # FIXME: Change to proper domains and load from config file, remove this once done
