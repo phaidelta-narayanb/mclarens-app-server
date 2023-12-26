@@ -41,6 +41,7 @@ def app_config() -> Mapping[str, Any]:
     )
 
 
+# App factory
 def init_app():
     app = FastAPI(**app_config())
 

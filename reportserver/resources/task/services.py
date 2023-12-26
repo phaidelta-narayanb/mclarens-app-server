@@ -1,40 +1,40 @@
-
-
 from datetime import datetime, timedelta
 from typing import List, Optional
 from uuid import uuid4
 from .models import TaskState, WorkTask, WorkTaskIDType
-from ...db.db import memdb
+from ...db import memdb
 
 memdb["tasks"] = []
 
 if len(memdb["tasks"]) == 0:
-    memdb["tasks"].extend([
-        WorkTask(
-            id="aaaabbbbccccdddd",
-            name="Dummy task",
-            status=TaskState.STARTED,
-            progress=0.50,
-            created_by_user=uuid4(),
-            created_ts=datetime.utcnow(),
-        ),
-        WorkTask(
-            id="eeeeffffgggghhhh",
-            name="Dummy task 2",
-            queue_position=2,
-            created_by_user=uuid4(),
-            created_ts=datetime.utcnow(),
-        ),
-        WorkTask(
-            id="iiiijjjjkkkkllll",
-            name="Dummy task 3",
-            status=TaskState.PENDING,
-            queue_position=5,
-            estimated_queue_time=timedelta(minutes=59),
-            created_by_user=uuid4(),
-            created_ts=datetime.utcnow(),
-        )
-    ])
+    memdb["tasks"].extend(
+        [
+            WorkTask(
+                id="aaaabbbbccccdddd",
+                name="Dummy task",
+                status=TaskState.STARTED,
+                progress=0.50,
+                created_by_user=uuid4(),
+                created_ts=datetime.utcnow(),
+            ),
+            WorkTask(
+                id="eeeeffffgggghhhh",
+                name="Dummy task 2",
+                queue_position=2,
+                created_by_user=uuid4(),
+                created_ts=datetime.utcnow(),
+            ),
+            WorkTask(
+                id="iiiijjjjkkkkllll",
+                name="Dummy task 3",
+                status=TaskState.PENDING,
+                queue_position=5,
+                estimated_queue_time=timedelta(minutes=59),
+                created_by_user=uuid4(),
+                created_ts=datetime.utcnow(),
+            ),
+        ]
+    )
 
 
 class TaskService:

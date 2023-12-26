@@ -8,6 +8,9 @@ from reportserver.db import memdb
 
 from .models import GeneratedReport, GeneratedReportSource
 
+from reporttask.celery_app import app  # noqa, TODO
+
+
 memdb["reports"] = []
 
 if len(memdb["reports"]) == 0:
@@ -56,6 +59,10 @@ class ReportService:
     async def create_report_generate_task(
         self, inference_model_name, incident_claim_type, images
     ) -> WorkTask:
+        # res = app.signature("create_report").delay(inference_model_name, images)
+
+        # res.id
+
         return WorkTask(
             id=uuid4().hex,
             name=incident_claim_type,
