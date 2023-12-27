@@ -16,8 +16,14 @@ from .models import WorkTask, TaskState, WorkTaskIDType
 # TODO: Same for other resources
 
 
+async def get_task_service() -> TaskService:
+    # TODO: Use proper db session maker
+    from reportserver.db import memdb
+    return TaskService(memdb)
+
+
 async def get_task_status(
-    task_id: WorkTaskIDType, task_service: TaskService = Depends(TaskService)
+    task_id: WorkTaskIDType, task_service: TaskService = Depends(get_task_service)
 ) -> WorkTask:
     task = await task_service.get_task_from_id(task_id)
     if task is None:
@@ -29,7 +35,7 @@ async def get_task_status(
 
 
 async def get_all_tasks_status(
-    task_service: TaskService = Depends(TaskService),
+    task_service: TaskService = Depends(get_task_service),
 ) -> List[WorkTask]:
     return await task_service.get_all_tasks()
 
@@ -59,7 +65,7 @@ async def dummy_tasks_status_generator(request: Request, task_service: TaskServi
 
 
 async def live_task_status(
-    request: Request, task_id: str, task_service: TaskService = Depends(TaskService)
+    request: Request, task_id: str, task_service: TaskService = Depends(get_task_service)
 ) -> EventSourceResponse:
     return EventSourceResponse(
         dummy_task_status_generator(request, task_id, task_service)
@@ -67,6 +73,6 @@ async def live_task_status(
 
 
 async def live_all_task_status(
-    request: Request, task_service: TaskService = Depends(TaskService)
+    request: Request, task_service: TaskService = Depends(get_task_service)
 ) -> EventSourceResponse:
     return EventSourceResponse(dummy_tasks_status_generator(request, task_service))

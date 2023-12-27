@@ -4,6 +4,7 @@ from uuid import uuid4
 from .models import TaskState, WorkTask, WorkTaskIDType
 from ...db import memdb
 
+
 memdb["tasks"] = []
 
 if len(memdb["tasks"]) == 0:
@@ -38,9 +39,8 @@ if len(memdb["tasks"]) == 0:
 
 
 class TaskService:
-    def __init__(self):
-        global memdb
-        self.db = memdb
+    def __init__(self, db):
+        self.db = db
 
     async def get_task_from_id(self, task_id: WorkTaskIDType) -> Optional[WorkTask]:
         for i in self.db["tasks"]:

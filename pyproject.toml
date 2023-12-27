@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "mclarens-server"
-version = "0.1.12"
+version = "0.1.13"
 description = ""
 authors = ["Narayan Bandodker <narayan.b@phaidelta.com>"]
 readme = "README.md"

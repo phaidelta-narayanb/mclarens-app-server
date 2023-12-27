@@ -29,9 +29,8 @@ if len(memdb["reports"]) == 0:
 
 
 class ReportService:
-    def __init__(self):
-        global memdb
-        self.db = memdb
+    def __init__(self, db):
+        self.db = db
 
     async def get_generated_report_from_id(self, report_id: int):
         for i in self.db["reports"]:

@@ -1,17 +1,16 @@
 from typing import Any, Mapping
-from jinja2 import Environment, FileSystemLoader
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from jinja2 import Environment, FileSystemLoader
 
 from reportgen.report_export import ReportExporter
 from reportgen.report_maker import ReportMaker
 
-from .resources import router as app_router
 from .config import Settings  # noqa
+from .resources import router as app_router
 
-
-API_VERSION = "0.1.12"
+API_VERSION = "0.1.13"
 """Protocol version"""
 
 # FIXME: Change to proper domains and load from config file, remove this once done
@@ -61,8 +60,9 @@ def init_app():
 
 def serve():
     """Serve the application - for development use. Use Gunicorn with `init_app` directly for production"""
-    import uvicorn
     import logging
+
+    import uvicorn
 
     logging.basicConfig(level=logging.DEBUG)
     uvicorn.run(init_app, factory=True)

@@ -13,6 +13,12 @@ from reportserver.resources.task.models import WorkTask
 from .models import CreateReportTask, GeneratedReport, GeneratedReportSource
 
 
+async def get_report_service() -> ReportService:
+    # TODO: Use proper db session maker
+    from reportserver.db import memdb
+    return ReportService(memdb)
+
+
 async def get_possible_export_formats() -> List[str]:
     return [".pdf"]
 
@@ -21,7 +27,7 @@ async def make_report(
     request: Request,
     inference_params: CreateReportTask = Depends(CreateReportTask.as_form),
     images: List[UploadFile] = File(None),
-    report_service: ReportService = Depends(ReportService),
+    report_service: ReportService = Depends(get_report_service),
 ) -> WorkTask:
     """Create a task to generate a report from the given prompt and images."""
 
@@ -45,7 +51,7 @@ async def make_report(
 
 
 async def get_report_list(
-    request: Request, report_service: ReportService = Depends(ReportService)
+    request: Request, report_service: ReportService = Depends(get_report_service)
 ) -> List[GeneratedReport]:
     """Get list of all created reports."""
     return await report_service.get_generated_reports()
@@ -54,7 +60,7 @@ async def get_report_list(
 async def get_report(
     request: Request,
     report_id: int,
-    report_service: ReportService = Depends(ReportService),
+    report_service: ReportService = Depends(get_report_service),
 ) -> GeneratedReportSource:
     """Get report with given id."""
     report = await report_service.get_generated_report_with_source_from_id(report_id)
@@ -70,7 +76,7 @@ async def get_report(
 async def get_report_pdf(
     request: Request,
     report_id: int,
-    report_service: ReportService = Depends(ReportService),
+    report_service: ReportService = Depends(get_report_service),
 ) -> FileResponse:
     """Get report PDF with given id."""
     pdf_response = await report_service.get_generated_report_pdf(
