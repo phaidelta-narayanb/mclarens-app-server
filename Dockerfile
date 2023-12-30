@@ -6,6 +6,8 @@ FROM python:3.10.13-slim
 
 ARG PACKAGE_INSTALL=.
 
+RUN ["python3", "-m", "pip", "install", "-U", "pip"]
+
 # Use a non-root user
 RUN ["useradd", "-u", "1001", "app"]
 USER app
@@ -14,8 +16,6 @@ WORKDIR /app
 
 # Copy project files
 COPY . .
-
-RUN ["python3", "-m", "pip", "install", "-U", "pip"]
 
 # Install package
 RUN ["python3", "-m", "pip", "install", "$PACKAGE_INSTALL"]
