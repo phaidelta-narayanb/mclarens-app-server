@@ -1,14 +1,14 @@
 from datetime import datetime
+from typing import Optional
 from uuid import uuid4
 
 from reportgen.report_export import ReportExporter
 
-from reportserver.resources.task.models import TaskState, WorkTask
 from reportserver.db import memdb
+from ..task.models import WorkTask
+from ..task.services import TaskService
 
 from .models import GeneratedReport, GeneratedReportSource
-
-from reporttask.celery_app import app  # noqa, TODO
 
 
 memdb["reports"] = []
@@ -56,16 +56,12 @@ class ReportService:
         return report_exporter.make_pdf(report.content)
 
     async def create_report_generate_task(
-        self, inference_model_name, incident_claim_type, images
-    ) -> WorkTask:
-        # res = app.signature("create_report").delay(inference_model_name, images)
-
-        # res.id
-
-        return WorkTask(
-            id=uuid4().hex,
-            name=incident_claim_type,
-            status=TaskState.PENDING,
-            created_by_user=uuid4(),
-            created_ts=datetime.utcnow(),
+        self, inference_model_name, incident_claim_type, images, task_service: TaskService
+    ) -> Optional[WorkTask]:
+        return task_service.create_and_save_task(
+            "image_caption_to_report",
+            work_task_name=incident_claim_type,
+            model=inference_model_name,
+            claim_type=incident_claim_type,
+            attachment=dict(images=images)
         )

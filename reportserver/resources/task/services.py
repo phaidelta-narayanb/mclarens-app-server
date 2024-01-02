@@ -1,8 +1,12 @@
 from datetime import datetime, timedelta
-from typing import List, Optional
+from typing import List, Optional, Union
 from uuid import uuid4
 from .models import TaskState, WorkTask, WorkTaskIDType
 from ...db import memdb
+
+from reporttask.celery_app import app
+from celery.canvas import Signature
+from celery.result import AsyncResult
 
 
 memdb["tasks"] = []
@@ -49,3 +53,38 @@ class TaskService:
 
     async def get_all_tasks(self) -> List[WorkTask]:
         return self.db["tasks"]
+
+    async def save_work_task(self, task: WorkTask):
+        print("Saving task", task)
+        return
+
+    async def create_and_save_task(
+        self,
+        task_name_or_signature: Union[str, Signature],
+        work_task_name: Optional[str] = None,
+        *args,
+        **kwargs
+    ) -> Optional[WorkTask]:
+        task: Signature
+        if isinstance(task_name_or_signature, Signature):
+            # Signature passed
+            task = task_name_or_signature
+        elif isinstance(task_name_or_signature, str):
+            # Task name passed, get signature
+            task = app.signature(task_name_or_signature)
+        else:
+            raise TypeError("Invalid type of task name given.")
+
+        task_result: AsyncResult = task.delay(*args, **kwargs)
+
+        work_task = WorkTask(
+            id=task_result.id,
+            name=work_task_name or f"task_{task_result.id}",
+            status=task_result.state,
+            created_by_user=uuid4(),
+            created_ts=datetime.utcnow(),
+        )
+
+        await self.save_work_task(work_task)
+
+        return work_task

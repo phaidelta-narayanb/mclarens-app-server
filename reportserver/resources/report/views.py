@@ -1,4 +1,3 @@
-import asyncio
 import tempfile
 from typing import List
 import zipfile
@@ -8,7 +7,10 @@ from fastapi.responses import FileResponse
 from starlette.status import HTTP_404_NOT_FOUND
 from reportserver.resources.report.services import ReportService
 
+# Cross-dependency on `tasks` resource
 from reportserver.resources.task.models import WorkTask
+from reportserver.resources.task.services import TaskService
+from reportserver.resources.task.views import get_task_service
 
 from .models import CreateReportTask, GeneratedReport, GeneratedReportSource
 
@@ -28,18 +30,9 @@ async def make_report(
     inference_params: CreateReportTask = Depends(CreateReportTask.as_form),
     images: List[UploadFile] = File(None),
     report_service: ReportService = Depends(get_report_service),
+    task_service: TaskService = Depends(get_task_service)
 ) -> WorkTask:
     """Create a task to generate a report from the given prompt and images."""
-
-    print("=== Extracted information ===")
-    print("Model name:", inference_params.inference_model_name)
-    print("Incident claim type:", inference_params.incident_claim_type)
-    print()
-    print("Images:", images)
-
-    print()
-    print("Waiting for some time to simulate celery inserting...")
-    await asyncio.sleep(2.0)
 
     # TODO: Complete OpenAI and Celery stuff
     # TODO: How to return live progress (%)? Decide between SSE, REST and WS
@@ -47,6 +40,7 @@ async def make_report(
         inference_params.inference_model_name,
         inference_params.incident_claim_type,
         images,
+        task_service
     )
 
 
