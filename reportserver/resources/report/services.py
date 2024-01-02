@@ -58,7 +58,7 @@ class ReportService:
     async def create_report_generate_task(
         self, inference_model_name, incident_claim_type, images, task_service: TaskService
     ) -> Optional[WorkTask]:
-        return task_service.create_and_save_task(
+        return await task_service.create_and_save_task(
             "image_caption_to_report",
             work_task_name=incident_claim_type,
             model=inference_model_name,
