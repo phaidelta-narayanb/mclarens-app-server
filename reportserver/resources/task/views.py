@@ -7,19 +7,21 @@ from starlette.status import HTTP_404_NOT_FOUND
 
 from sse_starlette.sse import EventSourceResponse
 
+from reportserver.resources.app_session import get_app_db_session
+
 from .services import TaskService
 
 from .models import WorkTask, TaskState, WorkTaskIDType
+from reportserver.db import Session
 
 # TODO: CLI Arguments to enable different modes (eg: flag to show no tasks, flag to
 # show 10 tasks, flag to show only done tasks, etc.)
 # TODO: Same for other resources
 
 
-async def get_task_service() -> TaskService:
-    # TODO: Use proper db session maker
-    from reportserver.db import memdb
-    return TaskService(memdb)
+async def get_task_service(db_session: Session = Depends(get_app_db_session)) -> TaskService:
+    """Helper function to return TaskService with the DB Session from App's settings."""
+    return TaskService(db_session)
 
 
 async def get_task_status(

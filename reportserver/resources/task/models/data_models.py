@@ -5,8 +5,9 @@ from pydantic import BaseModel
 
 from enum import Enum
 
+from reportserver.resources.models import ExceptionSchema
 
-WorkTaskIDType = str
+WorkTaskIDType = UUID
 
 
 class TaskState(str, Enum):
@@ -29,10 +30,20 @@ class TaskState(str, Enum):
     IGNORED = "IGNORED"
 
 
+class WorkTaskInsert(BaseModel):
+    id: WorkTaskIDType
+    name: str
+    status: TaskState = TaskState.PENDING
+    error: Optional[ExceptionSchema] = None
+    created_by_user: UUID
+
+
 class WorkTask(BaseModel):
     id: WorkTaskIDType
     name: str
     status: TaskState = TaskState.PENDING
+    error: Optional[ExceptionSchema] = None
+    has_result: bool = False
     progress: Optional[float] = None
     queue_position: Optional[int] = None
     estimated_queue_time: Optional[timedelta] = None

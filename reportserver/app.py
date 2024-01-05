@@ -1,4 +1,7 @@
-from typing import Any, Mapping
+import asyncio
+import logging
+from pathlib import Path
+from typing import Any, Mapping, Optional
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -6,11 +9,17 @@ from jinja2 import Environment, FileSystemLoader
 
 from reportgen.report_export import ReportExporter
 from reportgen.report_maker import ReportMaker
+from reportserver.db.base import Base
+from reportserver.db.config import DBSettings
+from reportserver.db.engine import get_engine
+from reportserver.utils import app_init_config
 
-from .config import Settings  # noqa
+from .config import Settings  # noqa, TODO
 from .resources import router as app_router
 
-API_VERSION = "0.1.13"
+LOG = logging.getLogger()
+
+API_VERSION = "0.1.14"
 """Protocol version"""
 
 # FIXME: Change to proper domains and load from config file, remove this once done
@@ -20,6 +29,7 @@ CORS_ALLOWED_ORIGINS = [
 """Cross-Origin allowed domains"""
 
 
+# TODO: Use BaseModel for storing config
 def app_config() -> Mapping[str, Any]:
     # settings = Settings()
 
@@ -37,13 +47,22 @@ def app_config() -> Mapping[str, Any]:
             "weasyprint",
             input_format="html",
         ),
+        db_settings=DBSettings(
+            db_uri="sqlite+aiosqlite:///dummy.dev.db"
+        ),  # TODO: Get from `settings` field
     )
 
 
-# App factory
-def init_app():
-    app = FastAPI(**app_config())
+@app_init_config
+def init_app(config: Optional[Mapping[str, Any]] = None) -> FastAPI:
+    """App factory method to create and initialize a new FastAPI application"""
+    if config is None:
+        config = app_config()
 
+    # Initialize new application with configuration
+    app = FastAPI(**config)
+
+    # Apply all routes defined in `resources`
     app_router.init_app(app)
 
     # CORS middleware
@@ -58,11 +77,40 @@ def init_app():
     return app
 
 
+async def init_db_async(db_settings: DBSettings):
+    LOG.info("Initializing database")
+    import importlib
+    importlib.import_module(".resources.register_db_models", package=__package__)
+
+    engine = get_engine(db_settings)
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+
+
+def init_db(config: Optional[Mapping[str, Any]] = None):
+    """Initialize the database from the given configuration"""
+    if config is None:
+        config = app_config()
+
+    asyncio.run(init_db_async(config["db_settings"]))
+
+
 def serve():
     """Serve the application - for development use. Use Gunicorn with `init_app` directly for production"""
-    import logging
-
     import uvicorn
 
-    logging.basicConfig(level=logging.DEBUG)
-    uvicorn.run(init_app, factory=True)
+    from .utils import init_logger
+
+    # Initialize logger from config file
+    init_logger(Path("logging.dev.ini"))
+
+    # Configuration used for initializing db and application
+    config = app_config()
+
+    # Initialize database
+    init_db(config)
+
+    app_fact = init_app(config=config)
+
+    # Create app with configuration
+    uvicorn.run(app_fact, factory=True)

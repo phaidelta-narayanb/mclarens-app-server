@@ -1,69 +1,89 @@
-from datetime import datetime, timedelta
+import asyncio
+import logging
 from typing import List, Optional, Union
 from uuid import uuid4
-from .models import TaskState, WorkTask, WorkTaskIDType
-from ...db import memdb
 
-from reporttask.celery_app import app
 from celery.canvas import Signature
 from celery.result import AsyncResult
 
+# SQL operations
+from sqlalchemy import sql
 
-memdb["tasks"] = []
+from reportserver.db import Session
+from reporttask.celery_app import app
 
-if len(memdb["tasks"]) == 0:
-    memdb["tasks"].extend(
-        [
-            WorkTask(
-                id="aaaabbbbccccdddd",
-                name="Dummy task",
-                status=TaskState.STARTED,
-                progress=0.50,
-                created_by_user=uuid4(),
-                created_ts=datetime.utcnow(),
-            ),
-            WorkTask(
-                id="eeeeffffgggghhhh",
-                name="Dummy task 2",
-                queue_position=2,
-                created_by_user=uuid4(),
-                created_ts=datetime.utcnow(),
-            ),
-            WorkTask(
-                id="iiiijjjjkkkkllll",
-                name="Dummy task 3",
-                status=TaskState.PENDING,
-                queue_position=5,
-                estimated_queue_time=timedelta(minutes=59),
-                created_by_user=uuid4(),
-                created_ts=datetime.utcnow(),
-            ),
-        ]
-    )
+from .models import DBWorkTask, WorkTask, WorkTaskIDType, WorkTaskInsert
+
+LOG = logging.getLogger()
 
 
 class TaskService:
-    def __init__(self, db):
+    def __init__(self, db: Session):
         self.db = db
 
+    async def _generate_work_task_from_db_model(
+        self, work_task: Optional[DBWorkTask]
+    ) -> WorkTask:
+        # Early return (None) if the given task entry is not found
+        if work_task is None:
+            return
+
+        task_result = AsyncResult(str(work_task.uuid), app=app)
+        task_error = (
+            task_result.backend.prepare_exception(task_result.result)
+            if task_result.failed()
+            else None
+        )
+
+        return WorkTask(
+            id=work_task.uuid,
+            name=work_task.name,
+            status=task_result.state,
+            error=task_error,
+            has_result=task_result.ready(),
+            created_by_user=work_task.created_by,
+            created_ts=work_task.created_ts,
+            updated_ts=work_task.updated_ts,
+        )
+
     async def get_task_from_id(self, task_id: WorkTaskIDType) -> Optional[WorkTask]:
-        for i in self.db["tasks"]:
-            if isinstance(i, WorkTask) and i.id == task_id:
-                return i
+        LOG.info("Fetching task with uuid '%s'", task_id)
+        async with self.db as sess:
+            result = await sess.execute(sql.select(DBWorkTask).filter_by(uuid=task_id))
+            return await self._generate_work_task_from_db_model(result.scalar())
 
     async def get_all_tasks(self) -> List[WorkTask]:
-        return self.db["tasks"]
+        LOG.info("Fetching tasks list")
+        async with self.db as sess:
+            result = await sess.execute(sql.select(DBWorkTask))
+            return await asyncio.gather(
+                *map(self._generate_work_task_from_db_model, result.scalars())
+            )
 
-    async def save_work_task(self, task: WorkTask):
-        print("Saving task", task)
-        return
+    async def save_work_task(self, task: WorkTaskInsert) -> WorkTask:
+        LOG.info("Saving new task with uuid '%s'", task.id)
+        async with self.db as sess:
+            # Save work task into db
+            sess.add(DBWorkTask.from_model(task))
+            await sess.commit()
+            # Fetch and return the result
+            result = await sess.execute(sql.select(DBWorkTask).filter_by(uuid=task.id))
+            newly_inserted_task = await self._generate_work_task_from_db_model(
+                result.scalar()
+            )
+            if newly_inserted_task is None:
+                raise RuntimeError(
+                    "Failed to verify that task '%s' was inserted into the database."
+                    % task.id
+                )
+            return newly_inserted_task
 
     async def create_and_save_task(
         self,
         task_name_or_signature: Union[str, Signature],
         work_task_name: Optional[str] = None,
         *args,
-        **kwargs
+        **kwargs,
     ) -> Optional[WorkTask]:
         task: Signature
         if isinstance(task_name_or_signature, Signature):
@@ -77,14 +97,11 @@ class TaskService:
 
         task_result: AsyncResult = task.delay(*args, **kwargs)
 
-        work_task = WorkTask(
+        work_task = WorkTaskInsert(
             id=task_result.id,
             name=work_task_name or f"task_{task_result.id}",
             status=task_result.state,
             created_by_user=uuid4(),
-            created_ts=datetime.utcnow(),
         )
 
-        await self.save_work_task(work_task)
-
-        return work_task
+        return await self.save_work_task(work_task)
