@@ -6,9 +6,11 @@ from typing import Any, Mapping, Optional
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from jinja2 import Environment, FileSystemLoader
+from tortoise import Tortoise
 
 from reportgen.report_export import ReportExporter
 from reportgen.report_maker import ReportMaker
+from reportserver.db.config import AppModule, DBSettings
 from reportserver.utils import app_init_config, unhandled_exception_handler
 
 from .config import Settings  # noqa, TODO
@@ -45,7 +47,14 @@ def app_config() -> Mapping[str, Any]:
             input_format="html",
         ),
         db_settings=DBSettings(
-            db_uri="sqlite+aiosqlite:///dummy.dev.db"
+            connections=dict(default="sqlite://dummy.dev.db"),
+            apps={
+                __package__: AppModule(
+                    models=[
+                        ".".join(["reportserver", "resources", "register_db_models"])
+                    ]
+                )
+            },
         ),  # TODO: Get from `settings` field
     )
 
@@ -77,13 +86,13 @@ def init_app(config: Optional[Mapping[str, Any]] = None) -> FastAPI:
 
 
 async def init_db_async(db_settings: DBSettings):
-    LOG.info("Initializing database")
-    import importlib
-    importlib.import_module(".resources.register_db_models", package=__package__)
+    LOG.info("Initializing database...")
+    await Tortoise.init(config=db_settings.model_dump(mode="json"))
 
-    engine = get_engine(db_settings)
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+    # Generate the schema
+    LOG.info("Generating database schema.")
+    await Tortoise.generate_schemas()
+    LOG.info("Database initialization completed.")
 
 
 def init_db(config: Optional[Mapping[str, Any]] = None):

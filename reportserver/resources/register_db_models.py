@@ -1,19 +1,7 @@
-"""Causes all Tables to register with the base model, by importing all
-the table classes. You just need to import this module for it to work."""
+"""Imports all database models for use in registering to ORM"""
 
-from ..db import Base
-
-from . import (
-    task,
-    report,
-    ws,
-    utility,
-)
+from .task.models import DBWorkTask
 
 __all__ = [
-    "Base",
-    "task",
-    "report",
-    "ws",
-    "utility"
+    "DBWorkTask",
 ]

@@ -3,13 +3,13 @@ import logging
 from typing import List, Optional, Union
 from uuid import uuid4
 
+from tortoise.exceptions import BaseORMException
+
+from reportserver.db import DBClientConnection
+
 from celery.canvas import Signature
 from celery.result import AsyncResult
 
-# SQL operations
-from sqlalchemy import sql
-
-from reportserver.db import Session
 from reporttask.celery_app import app
 
 from .models import DBWorkTask, WorkTask, WorkTaskIDType, WorkTaskInsert
@@ -18,7 +18,7 @@ LOG = logging.getLogger()
 
 
 class TaskService:
-    def __init__(self, db: Session):
+    def __init__(self, db: DBClientConnection):
         self.db = db
 
     async def _generate_work_task_from_db_model(
@@ -48,35 +48,37 @@ class TaskService:
 
     async def get_task_from_id(self, task_id: WorkTaskIDType) -> Optional[WorkTask]:
         LOG.info("Fetching task with uuid '%s'", task_id)
-        async with self.db as sess:
-            result = await sess.execute(sql.select(DBWorkTask).filter_by(uuid=task_id))
-            return await self._generate_work_task_from_db_model(result.scalar())
+        # Return WorkTask by merging with corresponding Celery task.
+        return await self._generate_work_task_from_db_model(
+            await DBWorkTask.get_or_none(uuid=task_id, using_db=self.db)
+        )
 
     async def get_all_tasks(self) -> List[WorkTask]:
         LOG.info("Fetching tasks list")
-        async with self.db as sess:
-            result = await sess.execute(sql.select(DBWorkTask))
-            return await asyncio.gather(
-                *map(self._generate_work_task_from_db_model, result.scalars())
+        # Convert list of `DBWorkTask` into `WorkTask` by merging with Celery tasks.
+        return await asyncio.gather(
+            *map(
+                self._generate_work_task_from_db_model,
+                await DBWorkTask.all(using_db=self.db),
             )
+        )
 
     async def save_work_task(self, task: WorkTaskInsert) -> WorkTask:
         LOG.info("Saving new task with uuid '%s'", task.id)
-        async with self.db as sess:
-            # Save work task into db
-            sess.add(DBWorkTask.from_model(task))
-            await sess.commit()
-            # Fetch and return the result
-            result = await sess.execute(sql.select(DBWorkTask).filter_by(uuid=task.id))
-            newly_inserted_task = await self._generate_work_task_from_db_model(
-                result.scalar()
-            )
-            if newly_inserted_task is None:
-                raise RuntimeError(
-                    "Failed to verify that task '%s' was inserted into the database."
-                    % task.id
-                )
-            return newly_inserted_task
+
+        # Convert input data into DB version.
+        work_task = DBWorkTask.from_model(task)
+
+        try:
+            # Save work task into db. Tortoise has autocommit so it should
+            # commit into the db after the operation.
+            await work_task.save(using_db=self.db)
+            return await self._generate_work_task_from_db_model(work_task)
+        except BaseORMException as e:
+            raise RuntimeError(
+                "Failed to verify that task '%s' was inserted into the database."
+                % task.id
+            ) from e
 
     async def create_and_save_task(
         self,
@@ -95,13 +97,15 @@ class TaskService:
         else:
             raise TypeError("Invalid type of task name given.")
 
+        # Launch new task of the given name with given parameters
         task_result: AsyncResult = task.delay(*args, **kwargs)
 
+        # Insert task to database
         work_task = WorkTaskInsert(
             id=task_result.id,
             name=work_task_name or f"task_{task_result.id}",
             status=task_result.state,
-            created_by_user=uuid4(),
+            created_by_user=uuid4(),  # TODO: from session id
         )
 
         return await self.save_work_task(work_task)
