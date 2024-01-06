@@ -9,10 +9,7 @@ from jinja2 import Environment, FileSystemLoader
 
 from reportgen.report_export import ReportExporter
 from reportgen.report_maker import ReportMaker
-from reportserver.db.base import Base
-from reportserver.db.config import DBSettings
-from reportserver.db.engine import get_engine
-from reportserver.utils import app_init_config
+from reportserver.utils import app_init_config, unhandled_exception_handler
 
 from .config import Settings  # noqa, TODO
 from .resources import router as app_router
@@ -61,6 +58,8 @@ def init_app(config: Optional[Mapping[str, Any]] = None) -> FastAPI:
 
     # Initialize new application with configuration
     app = FastAPI(**config)
+
+    app.add_exception_handler(Exception, unhandled_exception_handler)
 
     # Apply all routes defined in `resources`
     app_router.init_app(app)

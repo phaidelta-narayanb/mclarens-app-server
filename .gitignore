@@ -172,4 +172,4 @@ cython_debug/
 secrets/
 
 # Dummy database used for development
-dummy.dev.db
+dummy.dev.db*
