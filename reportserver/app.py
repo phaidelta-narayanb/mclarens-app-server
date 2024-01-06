@@ -51,7 +51,7 @@ def app_config() -> Mapping[str, Any]:
             apps={
                 __package__: AppModule(
                     models=[
-                        ".".join(["reportserver", "resources", "register_db_models"])
+                        ".".join([__package__, "resources", "register_db_models"])
                     ]
                 )
             },
@@ -68,10 +68,11 @@ def init_app(config: Optional[Mapping[str, Any]] = None) -> FastAPI:
     # Initialize new application with configuration
     app = FastAPI(**config)
 
-    app.add_exception_handler(Exception, unhandled_exception_handler)
-
     # Apply all routes defined in `resources`
     app_router.init_app(app)
+
+    # Exception handler "middlewares" (only executed when Exceptions occur)
+    app.add_exception_handler(Exception, unhandled_exception_handler)
 
     # CORS middleware
     app.add_middleware(
