@@ -18,7 +18,7 @@ from .resources import router as app_router
 
 LOG = logging.getLogger()
 
-API_VERSION = "0.1.14"
+API_VERSION = "0.2.0"
 """Protocol version"""
 
 # FIXME: Change to proper domains and load from config file, remove this once done
